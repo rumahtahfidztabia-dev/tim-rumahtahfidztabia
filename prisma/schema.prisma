@@ -1,0 +1,721 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model AdminUser {
+  id           String     @id @default(uuid())
+  name         String
+  username     String     @unique
+  email        String     @unique
+  passwordHash String
+  role         AdminRole  @default(EDITOR)
+  avatarUrl    String?
+  isActive     Boolean    @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime
+  Activity     Activity[]
+  Article      Article[]
+  Donation     Donation[]
+
+  // relasi ke tabel baru Tabia Ops
+  tasksAssigned     Task[]        @relation("AssignedTo")
+  tasksCreated      Task[]        @relation("CreatedBy")
+  kpiEntries        KpiEntry[]
+  wikiPagesAuthored WikiPage[]
+
+  @@map("AdminUser")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model AboutUs {
+  id            String   @id
+  heroImage     String?
+  foundedYear   Int      @default(2009)
+  history       String
+  visionMission String
+  youtubeUrl    String?
+  legalityText  String?
+  legalityFiles String[]
+  mapsEmbedUrl  String?
+  updatedAt     DateTime
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Activity {
+  id              String          @id
+  slug            String          @unique
+  title           String
+  description     String
+  eventDate       DateTime?
+  metaTitle       String?
+  metaDescription String?
+  categoryId      String?
+  authorId        String?
+  isPublished     Boolean         @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime
+  AdminUser       AdminUser?      @relation(fields: [authorId], references: [id])
+  Category        Category?       @relation(fields: [categoryId], references: [id])
+  ActivityMedia   ActivityMedia[]
+  ActivityTag     ActivityTag[]
+
+  @@index([isPublished, publishedAt])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ActivityBannerImage {
+  id        String   @id
+  imageUrl  String
+  caption   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([order])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ActivityMedia {
+  id         String    @id
+  activityId String
+  type       MediaType
+  imageUrl   String?
+  youtubeUrl String?
+  caption    String?
+  order      Int       @default(0)
+  createdAt  DateTime  @default(now())
+  Activity   Activity  @relation(fields: [activityId], references: [id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ActivityTag {
+  activityId String
+  tagId      String
+  Activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  Tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([activityId, tagId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Article {
+  id              String       @id
+  slug            String       @unique
+  title           String
+  excerpt         String?
+  content         String
+  coverImage      String?
+  metaTitle       String?
+  metaDescription String?
+  categoryId      String?
+  authorId        String?
+  isPublished     Boolean      @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime
+  AdminUser       AdminUser?   @relation(fields: [authorId], references: [id])
+  Category        Category?    @relation(fields: [categoryId], references: [id])
+  ArticleTag      ArticleTag[]
+
+  @@index([isPublished, publishedAt])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ArticleTag {
+  articleId String
+  tagId     String
+  Article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  Tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Campaign {
+  id              String        @id
+  slug            String        @unique
+  title           String
+  description     String
+  coverImage      String?
+  targetAmount    Decimal       @db.Decimal(14, 2)
+  collectedAmount Decimal       @default(0) @db.Decimal(14, 2)
+  deadline        DateTime?
+  isPinned        Boolean       @default(false)
+  isActive        Boolean       @default(true)
+  categoryId      String?
+  shareMessage    String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime
+  Category        Category?     @relation(fields: [categoryId], references: [id])
+  CampaignTag     CampaignTag[]
+  Donation        Donation[]
+
+  @@index([isPinned, isActive])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model CampaignTag {
+  campaignId String
+  tagId      String
+  Campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  Tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([campaignId, tagId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Category {
+  id       String       @id
+  slug     String
+  name     String
+  type     CategoryType @default(ARTICLE)
+  Activity Activity[]
+  Article  Article[]
+  Campaign Campaign[]
+
+  @@unique([slug, type])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ContactMessage {
+  id        String   @id
+  name      String
+  contact   String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model CrowdfundingPartner {
+  id           String   @id
+  logoUrl      String
+  platformName String
+  campaignUrl  String
+  order        Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Donation {
+  id                    String         @id
+  campaignId            String?
+  donorId               String
+  amount                Decimal        @db.Decimal(14, 2)
+  isAnonymousPublic     Boolean        @default(false)
+  status                DonationStatus @default(PENDING)
+  paymentMethod         PaymentMethod  @default(QRIS)
+  qrisPayload           String?
+  confirmedAt           DateTime?
+  verifiedAt            DateTime?
+  verifiedById          String?
+  prayer                String?
+  adminNote             String?
+  snapToken             String?
+  midtransTransactionId String?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime
+  Campaign              Campaign?      @relation(fields: [campaignId], references: [id])
+  Donor                 Donor          @relation(fields: [donorId], references: [id])
+  AdminUser             AdminUser?     @relation(fields: [verifiedById], references: [id])
+
+  @@index([status])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model DonationReport {
+  id          String   @id
+  title       String
+  periodStart DateTime
+  periodEnd   DateTime
+  summary     String
+  fileUrl     String?
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Donor {
+  id             String        @id
+  name           String
+  contact        String        @unique
+  contactType    String
+  category       DonorCategory @default(PROSPEK)
+  totalDonations Int           @default(0)
+  lastDonationAt DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime
+  Donation       Donation[]
+  DonorNote      DonorNote[]
+
+  @@index([category])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model DonorNote {
+  id        String   @id
+  donorId   String
+  note      String
+  createdAt DateTime @default(now())
+  Donor     Donor    @relation(fields: [donorId], references: [id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model FooterSetting {
+  id            String   @id
+  socialLinks   Json?
+  footerMenu    Json?
+  copyrightText String?
+  updatedAt     DateTime
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model HeroSetting {
+  id               String   @id
+  headline         String
+  subheadline      String?
+  imageUrl         String
+  imageUrl2        String?
+  ctaPrimaryText   String?
+  ctaPrimaryUrl    String?
+  ctaSecondaryText String?
+  ctaSecondaryUrl  String?
+  updatedAt        DateTime
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model HomepageSetting {
+  id                           String   @id
+  showStatistics               Boolean  @default(true)
+  showAboutSummary             Boolean  @default(true)
+  showCampaigns                Boolean  @default(true)
+  showCrowdfundingPartners     Boolean  @default(true)
+  showPrograms                 Boolean  @default(true)
+  showActivities               Boolean  @default(true)
+  showArticles                 Boolean  @default(true)
+  showTestimonials             Boolean  @default(false)
+  aboutPreviewImage            String?
+  statSantriCount              Int      @default(0)
+  statSantriLabel              String   @default("Santri Binaan")
+  statHafidzCount              Int      @default(0)
+  statHafidzLabel              String   @default("Hafidz Lulus")
+  statYearsActive              Int      @default(0)
+  statYearsLabel               String   @default("Tahun Berjalan")
+  partnerSectionTitle          String   @default("Pilih Platform")
+  partnerSectionTitleHighlight String   @default("Favorit Anda")
+  partnerSectionDescription    String   @default("Selain berdonasi langsung melalui website ini, Anda juga dapat menyalurkan kebaikan melalui berbagai platform donasi terpercaya berikut ini.")
+  ctaBannerHeadline            String   @default("Ingin Menjadi Bagian Dari Perubahan Ini?")
+  ctaBannerDescription         String   @default("Bantuan Anda, sekecil apapun, akan sangat berarti bagi kelangsungan pendidikan dan masa depan para santri penghafal Al-Qur'an.")
+  ctaBannerImageUrl            String   @default("")
+  ctaPrimaryText               String   @default("Gabung Relawan")
+  ctaPrimaryUrl                String   @default("/relawan")
+  ctaSecondaryText             String   @default("Donasi Sekarang")
+  ctaSecondaryUrl              String   @default("/donasi")
+  updatedAt                    DateTime
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Notification {
+  id        String           @id
+  type      NotificationType
+  title     String
+  message   String
+  refId     String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PaymentGatewaySetting {
+  id           String   @id
+  isActive     Boolean  @default(false)
+  isProduction Boolean  @default(false)
+  serverKey    String?
+  clientKey    String?
+  merchantId   String?
+  updatedAt    DateTime
+  createdAt    DateTime @default(now())
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Program {
+  id             String   @id
+  slug           String   @unique
+  title          String
+  description    String
+  content        String?
+  coverImage     String?
+  icon           String?
+  heroStats      Json?
+  quoteText      String?
+  quoteAuthor    String?
+  secondaryImage String?
+  methodology    Json?
+  targets        Json?
+  schedules      Json?
+  isActive       Boolean  @default(true)
+  order          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model QrisSetting {
+  id           String   @id
+  imageUrl     String
+  bankLogoUrl  String?
+  rawPayload   String
+  merchantName String?
+  isActive     Boolean  @default(true)
+  updatedAt    DateTime
+  createdAt    DateTime @default(now())
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model SiteSetting {
+  id                         String   @id
+  siteName                   String
+  tagline                    String?
+  logoLight                  String?
+  logoDark                   String?
+  favicon                    String?
+  contactEmail               String?
+  contactPhone               String?
+  contactWhatsapp            String?
+  address                    String?
+  operatingHours             String?
+  gtmId                      String?
+  ga4Id                      String?
+  metaPixelId                String?
+  telegramBotToken           String?
+  telegramChatId             String?
+  telegramNotifyDonation     Boolean  @default(true)
+  telegramNotifyContact      Boolean  @default(true)
+  seoTitle                   String?
+  seoDescription             String?
+  seoKeywords                String?
+  seoImage                   String?
+  waTemplateProspek          String?
+  waTemplateAktif            String?
+  certSignerName             String?
+  certSignatureImage         String?
+  certCity                   String?
+  termsAndConditions         String?
+  donationTotalDistributed   String?  @default("Rp 2.4 M+")
+  donationTotalBeneficiaries String?  @default("5.000+")
+  updatedAt                  DateTime
+  resendApiKey               String?
+  resendFromEmail            String?
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Tag {
+  id          String        @id
+  slug        String        @unique
+  name        String
+  ActivityTag ActivityTag[]
+  ArticleTag  ArticleTag[]
+  CampaignTag CampaignTag[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model TeamMember {
+  id       String  @id
+  name     String
+  position String
+  photoUrl String?
+  order    Int     @default(0)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model TermsAndConditions {
+  id            String   @id
+  sections      Json
+  effectiveDate DateTime @default(now())
+  updatedAt     DateTime
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Testimonial {
+  id        String   @id
+  name      String
+  role      String?
+  message   String
+  photoUrl  String?
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model TransparencyItem {
+  id        String            @id
+  group     TransparencyGroup
+  label     String
+  value     String
+  icon      String?
+  color     String?
+  order     Int               @default(0)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime
+
+  @@index([group, order])
+}
+
+enum AdminRole {
+  SUPERADMIN
+  EDITOR
+  KEUANGAN
+}
+
+enum CategoryType {
+  ARTICLE
+  CAMPAIGN
+  ACTIVITY
+}
+
+enum DonationStatus {
+  PENDING
+  MENUNGGU_VERIFIKASI
+  TERVERIFIKASI
+  KADALUARSA
+}
+
+enum DonorCategory {
+  PROSPEK
+  MENUNGGU_VERIFIKASI
+  AKTIF
+  TETAP
+  TIDAK_AKTIF
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum NotificationType {
+  DONATION_WAITING_VERIFICATION
+  CONTACT_MESSAGE
+  CAMPAIGN_MILESTONE
+}
+
+enum PaymentMethod {
+  QRIS
+  TRANSFER_MANUAL
+  GATEWAY
+}
+
+enum TransparencyGroup {
+  HOMEPAGE
+  PROGRAM
+  DONASI
+}
+
+// ==========================================
+// TIM
+// ==========================================
+
+enum Team {
+  KONTEN
+  FUNDRAISING
+}
+
+// ==========================================
+// TASK BOARD (KANBAN)
+// ==========================================
+
+enum TaskStatus {
+  BRIEF        // brief/ide masuk
+  DALAM_PROSES // desain/pengerjaan
+  REVIEW
+  REVISI
+  SELESAI
+}
+
+model OpsTaskCategory {
+  id        String   @id @default(uuid())
+  name      String
+  color     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tasks     Task[]
+}
+
+model Task {
+  id           String     @id @default(uuid())
+  title        String
+  description  String?
+  brief        String?    @db.Text
+  team         Team
+  opsTaskCategoryId String?
+  opsTaskCategory   OpsTaskCategory? @relation(fields: [opsTaskCategoryId], references: [id])
+  status       TaskStatus @default(BRIEF)
+  dueDate      DateTime?
+  month        String?
+  driveLink    String?
+  assignedToId String?
+  assignedTo   AdminUser? @relation("AssignedTo", fields: [assignedToId], references: [id])
+  createdById  String
+  createdBy    AdminUser  @relation("CreatedBy", fields: [createdById], references: [id])
+  contentCalendarItemId String?
+  contentCalendarItem   ContentCalendarItem? @relation(fields: [contentCalendarItemId], references: [id])
+  completedAt  DateTime?
+  kpiNote      String?    // Catatan refleksi dari Superadmin untuk task tidak selesai
+  order        Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([team, status])
+  @@index([assignedToId])
+  @@index([order])
+}
+
+// ==========================================
+// KALENDER KONTEN
+// ==========================================
+
+enum ContentChannel {
+  IG_FEED
+  IG_STORY
+  THREADS
+  FACEBOOK
+  WHATSAPP
+  WEBSITE
+}
+
+model ContentCalendarItem {
+  id            String         @id @default(uuid())
+  scheduledDate DateTime
+  channel       ContentChannel
+  topic         String         // misal "Makan Santri", "Kegiatan Belajar Mengajar"
+  isRecurring   Boolean        @default(true) // true untuk slot rotasi mingguan tetap
+  notes         String?
+  tasks         Task[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([scheduledDate])
+}
+
+// ==========================================
+// KPI
+// ==========================================
+
+enum KpiPeriod {
+  HARIAN
+  MINGGUAN
+  BULANAN
+}
+
+model KpiMetric {
+  id        String      @id @default(uuid())
+  team      Team
+  name      String      // misal "Jumlah Post Terupload Sesuai Jadwal", "Jumlah Follow-up Donatur"
+  unit      String      // misal "post", "follow-up", "closing"
+  period    KpiPeriod   @default(MINGGUAN)
+  isActive  Boolean     @default(true)
+  targets   KpiTarget[]
+  entries   KpiEntry[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model KpiTarget {
+  id          String    @id @default(uuid())
+  metricId    String
+  metric      KpiMetric @relation(fields: [metricId], references: [id])
+  periodStart DateTime
+  periodEnd   DateTime
+  targetValue Decimal   @db.Decimal(10, 2)
+  createdAt   DateTime  @default(now())
+
+  @@index([metricId, periodStart])
+}
+
+model KpiEntry {
+  id        String    @id @default(uuid())
+  metricId  String
+  metric    KpiMetric @relation(fields: [metricId], references: [id])
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id])
+  entryDate DateTime  // tanggal realisasi dicatat
+  value     Decimal   @db.Decimal(10, 2)
+  note      String?
+  createdAt DateTime  @default(now())
+
+  @@index([metricId, entryDate])
+  @@index([userId, entryDate])
+}
+
+// ==========================================
+// WIKI / DOKUMEN INTERNAL
+// ==========================================
+
+model WikiPage {
+  id        String     @id @default(uuid())
+  slug      String     @unique
+  title     String
+  content   String     // rich text (HTML/Markdown), sanitasi sebelum simpan
+  parentId  String?
+  parent    WikiPage?  @relation("WikiTree", fields: [parentId], references: [id])
+  children  WikiPage[] @relation("WikiTree")
+  team      Team?      // null = umum/lintas tim
+  authorId  String
+  author    AdminUser  @relation(fields: [authorId], references: [id])
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+// ==========================================
+// DATABASE / TABEL CUSTOM (ALA NOTION)
+// ==========================================
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  DATE
+  SELECT
+  MULTI_SELECT
+  CHECKBOX
+  USER
+}
+
+model CustomTable {
+  id        String             @id @default(uuid())
+  name      String             // misal "Daftar Platform Crowdfunding Eksternal"
+  team      Team?
+  fields    CustomTableField[]
+  rows      CustomTableRow[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+model CustomTableField {
+  id      String          @id @default(uuid())
+  tableId String
+  table   CustomTable     @relation(fields: [tableId], references: [id])
+  name    String          // nama kolom
+  type    CustomFieldType
+  options Json?           // untuk SELECT/MULTI_SELECT: daftar pilihan
+  order   Int             @default(0)
+}
+
+model CustomTableRow {
+  id        String      @id @default(uuid())
+  tableId   String
+  table     CustomTable @relation(fields: [tableId], references: [id])
+  data      Json        // { fieldId: value, ... } — fleksibel per baris
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}

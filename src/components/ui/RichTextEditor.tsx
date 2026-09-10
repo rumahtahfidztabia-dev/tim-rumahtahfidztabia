@@ -2,7 +2,9 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { Bold, Italic, List, ListOrdered, Undo, Redo } from 'lucide-react';
+import { Markdown } from 'tiptap-markdown';
+import { Bold, Italic, List, ListOrdered, Undo, Redo, Upload, Download } from 'lucide-react';
+import { useRef } from 'react';
 
 interface RichTextEditorProps {
   value: string;
@@ -11,9 +13,15 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
+      Markdown.configure({
+        transformPastedText: true,
+        transformCopiedText: true,
+      }),
     ],
     content: value,
     immediatelyRender: false,
@@ -30,6 +38,38 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   if (!editor) {
     return null;
   }
+
+  const handleImportMarkdown = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      if (editor) {
+        editor.commands.setContent(content);
+      }
+    };
+    reader.readAsText(file);
+    
+    // reset input
+    event.target.value = '';
+  };
+
+  const handleExportMarkdown = () => {
+    if (!editor) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const markdown = (editor.storage as any).markdown.getMarkdown();
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'brief.md';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="border border-slate-300 rounded-md overflow-hidden bg-white">
@@ -92,17 +132,44 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
         >
           <Redo className="w-4 h-4" />
         </button>
+
+        <div className="w-px h-6 bg-slate-300 mx-1"></div>
+
+        <input
+          type="file"
+          accept=".md"
+          ref={fileInputRef}
+          onChange={handleImportMarkdown}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="p-2 rounded hover:bg-slate-200 transition-colors text-slate-600 flex items-center gap-1 text-sm font-medium"
+          title="Import from Markdown file"
+        >
+          <Upload className="w-4 h-4" />
+          <span className="hidden sm:inline">Import .md</span>
+        </button>
+        <button
+          type="button"
+          onClick={handleExportMarkdown}
+          className="p-2 rounded hover:bg-slate-200 transition-colors text-slate-600 flex items-center gap-1 text-sm font-medium"
+          title="Export to Markdown file"
+        >
+          <Download className="w-4 h-4" />
+          <span className="hidden sm:inline">Export .md</span>
+        </button>
       </div>
       
-      <div className="max-h-[40vh] overflow-y-auto">
+      <div className="max-h-[40vh] overflow-y-auto relative">
         <EditorContent editor={editor} />
+        {!editor.getText() && placeholder && (
+          <div className="absolute top-3 left-3 text-slate-400 pointer-events-none text-sm">
+            {placeholder}
+          </div>
+        )}
       </div>
-      
-      {!value && placeholder && (
-        <div className="absolute -mt-37.5 ml-3 text-slate-400 pointer-events-none text-sm">
-          {placeholder}
-        </div>
-      )}
     </div>
   );
 }

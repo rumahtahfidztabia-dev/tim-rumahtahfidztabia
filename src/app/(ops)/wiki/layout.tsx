@@ -5,12 +5,12 @@ import { Plus } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-function buildTree(pages: any[]): WikiNode[] {
+function buildTree(pages: Array<{ id: string; slug: string; title: string; parentId: string | null }>): WikiNode[] {
   const map = new Map<string, WikiNode>();
   const roots: WikiNode[] = [];
 
   pages.forEach(p => {
-    map.set(p.id, { ...p, children: [] });
+    map.set(p.id, { id: p.id, slug: p.slug, title: p.title, parentId: p.parentId, children: [] });
   });
 
   pages.forEach(p => {
@@ -26,7 +26,7 @@ function buildTree(pages: any[]): WikiNode[] {
 
 export default async function WikiLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
-  const user = session?.user as { role?: string } | undefined;
+  const user = session?.user;
   
   const pages = await getWikiTree();
   const tree = buildTree(pages);

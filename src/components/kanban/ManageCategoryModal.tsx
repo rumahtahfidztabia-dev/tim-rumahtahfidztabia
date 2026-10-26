@@ -34,7 +34,7 @@ export function ManageCategoryModal({ isOpen, onClose, categories }: ManageCateg
     try {
       const result = await createOpsTaskCategory({ name: newName.trim() });
       if (!result.success) {
-        setError(result.error);
+        setError(result.error || "Gagal membuat kategori");
       } else {
         setNewName("");
       }
@@ -53,7 +53,7 @@ export function ManageCategoryModal({ isOpen, onClose, categories }: ManageCateg
     try {
       const result = await updateOpsTaskCategory(id, { name: editName.trim() });
       if (!result.success) {
-        setError(result.error);
+        setError(result.error || "Gagal memperbarui kategori");
       } else {
         setEditingId(null);
       }
@@ -83,7 +83,7 @@ export function ManageCategoryModal({ isOpen, onClose, categories }: ManageCateg
     try {
       const result = await deleteOpsTaskCategory(id);
       if (!result.success) {
-        setError(result.error);
+        setError(result.error || "Gagal menghapus kategori");
       }
     } catch {
       setError("Terjadi kesalahan sistem");

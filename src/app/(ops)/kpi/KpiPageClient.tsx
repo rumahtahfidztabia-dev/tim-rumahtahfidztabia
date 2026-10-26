@@ -13,7 +13,7 @@ type Props = {
   initialMonth: string;
 };
 
-export function KpiPageClient({ userRole, userName, initialData, initialMonth }: Props) {
+export function KpiPageClient({ userRole, userName, initialData }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(initialData);
   const [isPending, startTransition] = useTransition();

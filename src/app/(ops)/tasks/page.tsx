@@ -12,7 +12,7 @@ export default async function TasksPage() {
     redirect("/login");
   }
 
-  const userRole = (session.user as any).role || "EDITOR";
+  const userRole = session.user.role || "EDITOR";
   let teamContext: "KONTEN" | "FUNDRAISING" | undefined;
   if (userRole === "EDITOR") teamContext = "KONTEN";
   else if (userRole === "KEUANGAN") teamContext = "FUNDRAISING";

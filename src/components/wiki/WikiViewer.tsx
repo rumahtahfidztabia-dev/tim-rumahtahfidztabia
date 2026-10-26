@@ -24,8 +24,8 @@ export function WikiViewer({
       setIsDeleting(true);
       await deleteWikiPage(page.id);
       router.push("/wiki");
-    } catch (err: any) {
-      alert(err.message || "Gagal menghapus halaman");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Gagal menghapus halaman");
       setIsDeleting(false);
     }
   };

@@ -4,23 +4,24 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
+import { Prisma } from "@/generated/prisma/client";
+
 export async function getCalendarTasks(startDate: Date, endDate: Date) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) return [];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session.user as any;
+    const user = session.user;
     const isSuperadmin = user.role === "SUPERADMIN";
 
-    const whereClause: any = {
+    const whereClause: Prisma.TaskWhereInput = {
       dueDate: {
         gte: startDate,
         lte: endDate,
       },
     };
 
-    if (!isSuperadmin) {
+    if (!isSuperadmin && user.id) {
       whereClause.assignedToId = user.id;
     }
 

@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 
 export default async function WikiEmptyPage() {
   const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
+  const role = session?.user?.role;
   const isSuperadmin = role === "SUPERADMIN";
 
   return (

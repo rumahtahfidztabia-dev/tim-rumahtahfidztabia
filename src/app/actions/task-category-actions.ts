@@ -25,8 +25,8 @@ export async function createOpsTaskCategory(data: { name: string; color?: string
     });
     revalidatePath("/(ops)/tasks");
     return { success: true, category };
-  } catch (error: any) {
-    return { success: false, error: error.message || "Failed to create category" };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create category" };
   }
 }
 
@@ -44,8 +44,8 @@ export async function updateOpsTaskCategory(
     });
     revalidatePath("/(ops)/tasks");
     return { success: true, category };
-  } catch (error: any) {
-    return { success: false, error: error.message || "Failed to update category" };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to update category" };
   }
 }
 
@@ -64,7 +64,7 @@ export async function deleteOpsTaskCategory(id: string) {
     });
     revalidatePath("/(ops)/tasks");
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || "Failed to delete category" };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to delete category" };
   }
 }
